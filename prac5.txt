@@ -1,0 +1,39 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.cluster import KMeans
+
+# Load the data
+data = pd.read_csv('sales_data_sample.csv')
+
+# Step 1: Calculate total sales for each country
+country_sales = data.groupby('COUNTRY')['SALES'].sum().reset_index()
+
+# Step 2: Define sales tiers based on quantiles
+# Quantiles can divide the data into low, medium, and high sales groups
+country_sales['Sales_Tier'] = pd.qcut(country_sales['SALES'], q=3, labels=["Low Sales", "Medium Sales", "High Sales"])
+
+# Step 3: Convert the categorical sales tiers into numerical codes for clustering
+country_sales['Sales_Tier_Code'] = country_sales['Sales_Tier'].cat.codes
+
+# Step 4: Prepare data for clustering (only the country and sales tier code)
+X = country_sales[['Sales_Tier_Code']].values
+
+# Step 5: Apply KMeans with limited clusters, say 3 for simplicity
+model = KMeans(n_clusters=3, random_state=0)
+country_sales['Cluster'] = model.fit_predict(X)
+
+# Step 6: Plot the clustering results
+plt.figure(figsize=(10, 6))
+sns.scatterplot(
+    x=country_sales['COUNTRY'], y=country_sales['SALES'],
+    hue=country_sales['Cluster'], palette="Set2", s=100
+)
+plt.title("Country Clustering Based on Sales Tiers")
+plt.xlabel("Country")
+plt.ylabel("Total Sales")
+plt.xticks(rotation=90)
+plt.legend(title="Cluster")
+plt.tight_layout()
+plt.show()
